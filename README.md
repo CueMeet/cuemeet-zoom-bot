@@ -5,6 +5,20 @@
 
 ---
 
+## Links to CueMeet Repositories
+
+You can explore all our repositories for additional tools and integrations:
+
+<ul>
+  <li><a href="https://github.com/CueMeet/cuemeet-documentation" target="_blank">CueMeet Docs</a></li>
+  <li><a href="https://github.com/CueMeet/Meeting-Bots-Control-Panel" target="_blank">CueMeet Control Panel</a></li>
+  <li><a href="https://github.com/CueMeet/cuemeet-google-bot" target="_blank">Google Meet Bot</a></li>
+    <li><a href="https://github.com/CueMeet/cuemeet-teams-bot" target="_blank">Ms Teams Bot</a></li>
+    <li><a href="https://github.com/CueMeet/cuemeet-zoom-bot" target="_blank">Zoom Meet Bot</a></li>
+</ul>
+
+---
+
 ## 📚 Documentation
 
 Detailed documentation is available in the [docs](https://cuemeet.github.io/cuemeet-documentation/docs/zoom-bot) directory:
