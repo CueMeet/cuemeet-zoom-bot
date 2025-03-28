@@ -1,6 +1,6 @@
 <div align="center">
   <img src="https://i.postimg.cc/FRLZLSSF/Banner.png" alt="Meeting Bots Control Panel Banner" />
-  <h1>CueMeet Meeting Bots - Microsoft Teams Meeting Bot</h1>
+  <h1>CueMeet Meeting Bots - Zoom Meeting Bot</h1>
 </div>
 
 ---
