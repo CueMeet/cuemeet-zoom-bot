@@ -1,0 +1,23 @@
+{
+  "name": "CueMeet",
+  "version": "2.2.0",
+  "manifest_version": 3,
+  "description": "Zoom Meet transcripts",
+  "action": {},
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'"
+  },
+  "content_scripts": [
+    {
+      "js": ["content.js"],
+      "run_at": "document_end",
+      "matches": ["https://app.zoom.us/*"],
+      "exclude_matches": ["https://app.zoom.us/"]
+    }
+  ],
+  "permissions": ["storage"],
+  "host_permissions": ["https://app.zoom.us/*"],
+  "background": {
+    "service_worker": "background.js"
+  }
+}

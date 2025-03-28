@@ -1,0 +1,63 @@
+# Dockerignore file for a Django app
+
+# Ignore common Python files
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+*.pyc
+*.egg-info/
+dist/
+*.egg
+*.log
+*.sqlite3
+
+# Ignore virtual environments
+.venv/
+venv/
+ENV/
+.vscode/
+
+# Ignore Django files
+media/
+staticfiles/
+
+# Ignore version control files
+.git/
+.gitignore
+.gitattributes
+.hg/
+.hgignore
+.hgsub
+.hgsubstate
+.hgtags
+.svn/
+
+# Ignore local configuration files
+.local/
+.make.env
+.env.local
+.env.test
+
+# Ignore IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*.swn
+*.bak
+*.pyc~
+
+# Ignore Docker files
+Dockerfile
+docker-compose.yml
+
+# Ignore other files
+node_modules/
+nginx/
+mypi.ini
+README.md
+Makefile
+.DS_Store
+keys/
+./dumy_data
