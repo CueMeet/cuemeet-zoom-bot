@@ -25,7 +25,7 @@ from config import Settings
 
 
 class JoinZoomMeet:
-    def __init__(self, meetlink, start_time_utc, end_time_utc, min_record_time=3600, bot_name="Zoom Bot", presigned_url_combined=None, presigned_url_audio=None, max_waiting_time=1800, project_settings:Settings=None, logger:logging=None):
+    def __init__(self, meetlink, start_time_utc, end_time_utc, min_record_time=3600, bot_name="Zoom Bot", presigned_url_combined=None, presigned_url_audio=None, max_waiting_time=1800, project_settings:Settings=None, logger:logging=None, is_video_record=False):
         self.meeting_id, self.meeting_pwd = extract_zoom_details(meetlink)
         self.start_time_utc = start_time_utc
         self.end_time_utc = end_time_utc
@@ -48,10 +48,13 @@ class JoinZoomMeet:
         self.project_settings = project_settings
         self.logger = logger
         self.highlight = init_highlight(self.project_settings.HIGHLIGHT_PROJECT_ID, self.project_settings.ENVIRONMENT_NAME, "zoom-bot")
+        self.is_video_record = is_video_record
+        self.video_output_file = f"out/{self.output_file}.mp4" if self.is_video_record else None
 
     def setup_browser(self):
         options = Options()
-        options.add_argument('--headless')
+        if not self.is_video_record:
+            options.add_argument('--headless')
         options.add_argument('--start-maximized')
         options.add_argument('--disable-notifications')
         options.add_argument('--disable-infobars')
@@ -334,38 +337,67 @@ class JoinZoomMeet:
 
 
     def start_recording(self):
-        logging.info("Starting meeting audio recording with FFmpeg...")
+        logging.info("Starting meeting recording with FFmpeg...")
         output_audio_file = f'{self.output_file}.opus'
         
-        if platform.system() == 'Darwin':
-            command = [
-                "ffmpeg",
-                "-f", "avfoundation",
-                "-i", ":0",
-                "-acodec", "libopus",
-                "-b:a", "128k",
-                "-ac", "1",  
-                "-ar", "48000",
-                output_audio_file
-            ]
-        elif platform.system() == 'Linux':  
-            command = [
-                "ffmpeg",
-                "-f", "pulse",
-                "-i", "virtual-sink.monitor",
-                "-af", "aresample=async=1000",  # Help with audio synchronization
-                "-acodec", "libopus",
-                "-application", "audio",  # Optimize for audio quality
-                "-b:a", "256k",  # Higher bitrate for better quality
-                "-vbr", "on",  # Variable bitrate for better quality/size balance
-                "-frame_duration", "60",  # Longer frames for more stable encoding
-                "-ac", "1",
-                "-ar", "48000",
-                output_audio_file
-            ]
+        if self.is_video_record:
+            if platform.system() == 'Linux':
+                # Get display number from environment or default to :0
+                display = os.environ.get('DISPLAY', ':0')
+                
+                command = [
+                    "ffmpeg",
+                    "-f", "x11grab", # Uses X11 screen capture
+                    "-video_size", "1920x1080",  # Records at 1080p
+                    "-framerate", "30", # 30 frames per second
+                    "-i", f"{display}+0,0",  # Captures from display
+                    "-f", "pulse", # Uses PulseAudio for audio
+                    "-i", "virtual-sink.monitor", # Uses virtual-sink.monitor for audio
+                    "-c:v", "libx264", # Video codec
+                    "-preset", "ultrafast",
+                    "-crf", "23", # Video quality
+                    "-c:a", "libopus", # Audio codec
+                    "-b:a", "128k",
+                    "-ac", "1",
+                    "-ar", "48000",
+                    self.video_output_file
+                ]
+            else:
+                logging.error("Video recording is only supported on Linux systems with X11")
+                self.end_session()
+                return
         else:
-            self.logger.error("Unsupported operating system for recording.")
-            self.end_session()
+            if platform.system() == 'Darwin':
+                command = [
+                    "ffmpeg",
+                    "-f", "avfoundation",
+                    "-i", ":0",
+                    "-acodec", "libopus",
+                    "-b:a", "128k",
+                    "-ac", "1",  
+                    "-ar", "48000",
+                    output_audio_file
+                ]
+            elif platform.system() == 'Linux':  
+                command = [
+                    "ffmpeg",
+                    "-f", "pulse",
+                    "-i", "virtual-sink.monitor",
+                    "-af", "aresample=async=1000", # Help with audio synchronization
+                    "-acodec", "libopus",
+                    "-application", "audio", # Help with audio synchronization
+                    "-b:a", "256k", # Higher bitrate for better quality
+                    "-vbr", "on", # Variable bitrate for better quality/size balance
+                    "-frame_duration", "60", # Longer frames for more stable encoding
+                    "-ac", "1",
+                    "-ar", "48000",
+                    output_audio_file
+                ]
+            else:
+                self.logger.error("Unsupported operating system for recording.")
+                self.end_session()
+                return
+
         try:
             self.logger.info(f"Executing FFmpeg command: {' '.join(command)}")
             
@@ -373,7 +405,7 @@ class JoinZoomMeet:
             self.recording_process = subprocess.Popen(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             self.recording_started = True
             self.recording_start_time = time.perf_counter()
-            logging.info(f"Recording started. Output will be saved to {output_audio_file}")
+            logging.info(f"Recording started. Output will be saved to {self.video_output_file if self.is_video_record else output_audio_file}")
         except subprocess.CalledProcessError as e:
             logging.error(f"Error starting FFmpeg: {e}")
             logging.error(f"FFmpeg output: {e.output}")

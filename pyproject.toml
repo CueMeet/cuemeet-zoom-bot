@@ -13,6 +13,7 @@ pillow = "^10.4.0"
 webdriver-manager = "^4.0.2"
 highlight-io = "^0.10.0"
 pydantic-settings = "^2.8.1"
+python-xlib = "^0.33"
 
 [build-system]
 requires = ["poetry-core"]
