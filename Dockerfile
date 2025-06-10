@@ -22,6 +22,21 @@ RUN apt-get update --fix-missing && apt-get install -y \
     libnss3 \
     libgbm1 \
     libasound2 \
+    xvfb \
+    x11vnc \
+    x11-xserver-utils \
+    xauth \
+    x11-apps \
+    libx11-xcb1 \
+    libxcomposite1 \
+    libxcursor1 \
+    libxdamage1 \
+    libxi6 \
+    libxtst6 \
+    libxrandr2 \
+    libxss1 \
+    libxcb1 \
+    libxcb-dri3-0 \
     && ln -fs /usr/share/zoneinfo/UTC /etc/localtime \
     && dpkg-reconfigure --frontend noninteractive tzdata \
     && rm -rf /var/lib/apt/lists/*
