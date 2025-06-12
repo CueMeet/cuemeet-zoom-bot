@@ -18,6 +18,7 @@ if __name__ == "__main__":
         parser.add_argument("--presigned-url-combined", default=None, help="Tar file presigned URL to upload the recording file and transcription file")
         parser.add_argument("--presigned-url-audio", default=None, help="Audio file presigned URL to upload the recording file")
         parser.add_argument("--max-waiting-time", type=int, default=1800, help="Maximum waiting time in seconds (Default: 30 minutes)")
+        parser.add_argument("--is-video-record", action="store_true", help="Enable video recording (Default: False)")
 
         args = parser.parse_args()
 
@@ -31,7 +32,8 @@ if __name__ == "__main__":
             presigned_url_audio=args.presigned_url_audio,
             max_waiting_time=args.max_waiting_time,
             project_settings=get_settings(),
-            logger=LogConfig().get_logger("Zoom Meeting Bot")
+            logger=LogConfig().get_logger("Zoom Meeting Bot"),
+            is_video_record=args.is_video_record
         )
         meet_bot.run()
     

@@ -15,6 +15,9 @@ def extract_zoom_details(url):
     # Extract meeting ID and passcode if found
     meeting_id = meeting_id_match.group(1) if meeting_id_match else None
     passcode = passcode_match.group(1) if passcode_match else None
+    
+    logging.info(f"Meeting id: {meeting_id}")
+    logging.info(f"Passcode: {passcode}")
 
     return meeting_id, passcode
 

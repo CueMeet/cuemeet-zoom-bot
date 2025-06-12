@@ -50,11 +50,13 @@ class JoinZoomMeet:
         self.highlight = init_highlight(self.project_settings.HIGHLIGHT_PROJECT_ID, self.project_settings.ENVIRONMENT_NAME, "zoom-bot")
         self.is_video_record = is_video_record
         self.video_output_file = f"out/{self.output_file}.mp4" if self.is_video_record else None
+        if self.is_video_record:
+            logging.info("Video recording mode enabled. Output will be saved as MP4 file.")
+            logging.info(f"Video recording will be saved to: {self.video_output_file}")
 
     def setup_browser(self):
         options = Options()
-        if not self.is_video_record:
-            options.add_argument('--headless')
+        options.add_argument('--headless')
         options.add_argument('--start-maximized')
         options.add_argument('--disable-notifications')
         options.add_argument('--disable-infobars')
@@ -341,9 +343,19 @@ class JoinZoomMeet:
         output_audio_file = f'{self.output_file}.opus'
         
         if self.is_video_record:
+            logging.info("Initializing video recording setup...")
             if platform.system() == 'Linux':
-                # Get display number from environment or default to :0
                 display = os.environ.get('DISPLAY', ':0')
+                logging.info(f"Using X11 display: {display} for video capture")
+                
+                # Log video recording configuration
+                logging.info("Video recording configuration:")
+                logging.info("- Resolution: 1920x1080 (1080p)")
+                logging.info("- Frame rate: 30 fps")
+                logging.info("- Video codec: libx264 (ultrafast preset)")
+                logging.info("- Video quality: CRF 23")
+                logging.info("- Audio codec: libopus")
+                logging.info("- Audio quality: 128k bitrate, 48kHz, mono")
                 
                 command = [
                     "ffmpeg",
@@ -362,8 +374,10 @@ class JoinZoomMeet:
                     "-ar", "48000",
                     self.video_output_file
                 ]
+                logging.info("Video recording command prepared with FFmpeg")
             else:
                 logging.error("Video recording is only supported on Linux systems with X11")
+                logging.error(f"Current platform: {platform.system()}")
                 self.end_session()
                 return
         else:
@@ -402,25 +416,48 @@ class JoinZoomMeet:
             self.logger.info(f"Executing FFmpeg command: {' '.join(command)}")
             
             self.event_start_time = datetime.now(timezone.utc)
+            if self.is_video_record:
+                logging.info("Starting FFmpeg process for video recording...")
             self.recording_process = subprocess.Popen(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             self.recording_started = True
             self.recording_start_time = time.perf_counter()
-            logging.info(f"Recording started. Output will be saved to {self.video_output_file if self.is_video_record else output_audio_file}")
+            
+            if self.is_video_record:
+                logging.info("Video recording process started successfully")
+                logging.info(f"Recording started at: {self.event_start_time.isoformat()}")
+                logging.info(f"Video will be saved to: {self.video_output_file}")
+            else:
+                logging.info(f"Audio recording started. Output will be saved to {output_audio_file}")
+            
         except subprocess.CalledProcessError as e:
-            logging.error(f"Error starting FFmpeg: {e}")
+            if self.is_video_record:
+                logging.error("Failed to start video recording process")
+                logging.error(f"FFmpeg video recording error: {e}")
+            else:
+                logging.error(f"Error starting FFmpeg: {e}")
             logging.error(f"FFmpeg output: {e.output}")
 
 
     def stop_recording(self):
         if self.recording_started and self.recording_process:
-            logging.info("Stopping audio recording...")
+            if self.is_video_record:
+                logging.info("Stopping video recording...")
+            else:
+                logging.info("Stopping audio recording...")
+            
             self.recording_process.terminate()
             try:
                 self.recording_process.wait()
-                logging.info("Recording stopped.")
+                if self.is_video_record:
+                    logging.info("Video recording stopped successfully")
+                    logging.info(f"Video file saved to: {self.video_output_file}")
+                else:
+                    logging.info("Recording stopped.")
             except subprocess.TimeoutExpired:
                 logging.warning("Recording process did not terminate in time. Forcibly killing it.")
                 self.recording_process.kill()
+                if self.is_video_record:
+                    logging.warning("Video recording process killed forcibly")
                 logging.info("Recording process killed.")
         else:
             logging.info("No recording was started, nothing to stop.")
@@ -507,6 +544,8 @@ class JoinZoomMeet:
         try:
             time.sleep(10)
             if self.browser and self.recording_started:
+                if self.is_video_record:
+                    logging.info("Finalizing video recording session...")
                 logging.info("Initiating transcript save...")
                 try:
                     self.save_transcript()
@@ -522,13 +561,19 @@ class JoinZoomMeet:
                     logging.error(f"Failed to close browser: {e}")
             self.stop_event.set()
             if self.recording_started:
+                if self.is_video_record:
+                    logging.info("Stopping video recording and cleaning up...")
                 self.stop_recording()
                 self.upload_files()
             else:
                 logging.info("No recording was started during this session.")
         except Exception as e:
+            if self.is_video_record:
+                logging.error(f"Error during video recording session cleanup: {str(e)}")
             logging.error("Error during session cleanup %s", str(e), exc_info=True)
         finally:
+            if self.is_video_record:
+                logging.info("Video recording session ended successfully.")
             logging.info("Session ended successfully.")
             sys.exit(0)
 
